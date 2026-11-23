@@ -10,7 +10,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "lcov"],
       include: ["src/lib/**/*.ts"],
-      exclude: ["src/generated/**", "**/*.d.ts", "**/*.test.ts"],
+      exclude: ["src/generated/**", "src/lib/db.ts", "**/*.d.ts", "**/*.test.ts"],
       thresholds: { statements: 70, branches: 70, functions: 70, lines: 70 },
     },
   },

@@ -41,7 +41,7 @@ npx vitest run src/lib/referrals/status-machine.test.ts   # one file
 npx vitest run -t "rejects a skipped stage"               # by test name
 npm run test:coverage    # fails below 70% on src/lib/**
 docker compose up -d     # local Postgres (creds in .env.example)
-npm run db:migrate       # prisma migrate dev (needs DATABASE_URL)
+npm run db:migrate       # prisma migrate dev + generate (needs DATABASE_URL)
 npm run db:generate      # regenerate Prisma Client
 ```
 
@@ -62,7 +62,9 @@ Before saying a task is done run: `npm run lint && npm run typecheck && npm test
    candidate) and `InterviewFeedback` (visible to the candidate). Never merge them behind a flag.
 5. **Prisma Client is imported from `@/generated/prisma`** (git-ignored, generated on install), via
    a single shared client in `src/lib/db.ts`. The datasource URL is in `prisma.config.ts`, not the
-   schema (Prisma 7).
+   schema (Prisma 7). Prisma 7 needs the `@prisma/adapter-pg` driver adapter, and
+   `migrate dev` no longer runs `generate` — run `npm run db:generate` after schema changes or the
+   client silently lacks the new models.
 6. **Next.js 16 specifics**: request interception is `src/proxy.ts` (not `middleware.ts`);
    `cacheComponents` is on, so data that depends on the session must be read inside a Suspense
    boundary or a dynamic component. Check `node_modules/next/dist/docs/` before using an API you
