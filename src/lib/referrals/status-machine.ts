@@ -87,3 +87,11 @@ export function transition(
     change: { requestId: request.id, from: request.status, to, actorId: actor.id, reason },
   };
 }
+
+/** Statuses `actor` may move `request` to, in pipeline order. Use it to decide which buttons to show. */
+export function allowedTransitions(request: RequestRef, actor: Actor): RequestStatus[] {
+  const party = partyOf(request, actor);
+  if (!party) return [];
+  const edges = RULES[request.status] ?? {};
+  return (Object.keys(edges) as RequestStatus[]).filter((to) => edges[to]?.includes(party));
+}
