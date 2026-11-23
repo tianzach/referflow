@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { RequestStatus, Role } from "@/generated/prisma/enums";
-import { transition, type Actor, type RequestRef } from "./status-machine";
+import {
+  allowedTransitions,
+  isTerminal,
+  transition,
+  type Actor,
+  type RequestRef,
+} from "./status-machine";
 
 const { PENDING, APPROVED, DECLINED, REFERRED, INTERVIEWING, OFFER, CLOSED } = RequestStatus;
 
@@ -193,5 +199,59 @@ describe("AC7: a successful move returns the StatusChange to persist", () => {
       reason: "Accepted another offer",
     });
     expect(result.ok && result.change.reason).toBe("Accepted another offer");
+  });
+});
+
+describe("AC8: allowedTransitions lists the moves an actor may make (drives UI buttons)", () => {
+  it("assigned referrer on a PENDING request: approve or decline", () => {
+    expect(allowedTransitions(request(PENDING), referrer)).toEqual([APPROVED, DECLINED]);
+  });
+
+  it("owning candidate on a PENDING request: withdraw only", () => {
+    expect(allowedTransitions(request(PENDING), candidate)).toEqual([CLOSED]);
+  });
+
+  it("assigned referrer on an INTERVIEWING request: offer or close", () => {
+    expect(allowedTransitions(request(INTERVIEWING), referrer)).toEqual([OFFER, CLOSED]);
+  });
+
+  it("owning candidate on a REFERRED request: nothing", () => {
+    expect(allowedTransitions(request(REFERRED), candidate)).toEqual([]);
+  });
+
+  it("an unrelated user gets nothing", () => {
+    expect(allowedTransitions(request(APPROVED), otherReferrer)).toEqual([]);
+    expect(allowedTransitions(request(APPROVED), otherCandidate)).toEqual([]);
+  });
+
+  it.each([DECLINED, OFFER, CLOSED])("nothing is allowed from terminal %s", (status) => {
+    expect(allowedTransitions(request(status), referrer)).toEqual([]);
+  });
+
+  it("agrees with transition() for every status and actor", () => {
+    const actors = [referrer, candidate, otherReferrer, otherCandidate];
+    for (const status of Object.values(RequestStatus)) {
+      for (const actor of actors) {
+        const listed = allowedTransitions(request(status), actor);
+        for (const to of Object.values(RequestStatus)) {
+          const ok = transition(request(status), actor, to, { reason: "r" }).ok;
+          expect(ok, `${actor.id} ${status} → ${to}`).toBe(listed.includes(to));
+        }
+      }
+    }
+  });
+});
+
+describe("isTerminal", () => {
+  it.each([
+    [DECLINED, true],
+    [OFFER, true],
+    [CLOSED, true],
+    [PENDING, false],
+    [APPROVED, false],
+    [REFERRED, false],
+    [INTERVIEWING, false],
+  ])("%s → %s", (status, expected) => {
+    expect(isTerminal(status)).toBe(expected);
   });
 });
