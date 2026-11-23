@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: referflow
+      POSTGRES_PASSWORD: referflow
+      POSTGRES_DB: referflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - referflow-db:/var/lib/postgresql/data
+volumes:
+  referflow-db:
