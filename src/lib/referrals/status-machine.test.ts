@@ -135,3 +135,63 @@ describe("AC5: withdrawing and closing", () => {
     });
   });
 });
+
+describe("AC6: declining requires a reason", () => {
+  it.each([
+    ["missing", undefined],
+    ["empty", ""],
+    ["whitespace only", "   "],
+  ])("a %s reason is REASON_REQUIRED", (_label, reason) => {
+    expect(transition(request(PENDING), referrer, DECLINED, { reason })).toEqual({
+      ok: false,
+      error: "REASON_REQUIRED",
+    });
+  });
+
+  it("permission is checked before the reason", () => {
+    expect(transition(request(PENDING), candidate, DECLINED)).toEqual({
+      ok: false,
+      error: "FORBIDDEN",
+    });
+  });
+});
+
+describe("AC7: a successful move returns the StatusChange to persist", () => {
+  it("records from, to, actor and the trimmed reason", () => {
+    const result = transition(request(PENDING), referrer, DECLINED, {
+      reason: "  Team is not hiring new grads  ",
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      change: {
+        requestId: "req-1",
+        from: PENDING,
+        to: DECLINED,
+        actorId: "referrer-1",
+        reason: "Team is not hiring new grads",
+      },
+    });
+  });
+
+  it("stores a null reason when none is given", () => {
+    const result = transition(request(APPROVED), referrer, REFERRED);
+    expect(result).toEqual({
+      ok: true,
+      change: {
+        requestId: "req-1",
+        from: APPROVED,
+        to: REFERRED,
+        actorId: "referrer-1",
+        reason: null,
+      },
+    });
+  });
+
+  it("keeps an optional reason on non-decline moves (e.g. why the candidate withdrew)", () => {
+    const result = transition(request(PENDING), candidate, CLOSED, {
+      reason: "Accepted another offer",
+    });
+    expect(result.ok && result.change.reason).toBe("Accepted another offer");
+  });
+});
