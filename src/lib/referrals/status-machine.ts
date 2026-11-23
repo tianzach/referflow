@@ -9,9 +9,20 @@ export type RequestRef = {
   status: RequestStatus;
 };
 
-export type TransitionError = "INVALID_TRANSITION" | "TERMINAL_STATUS" | "FORBIDDEN";
+export type TransitionError =
+  "INVALID_TRANSITION" | "TERMINAL_STATUS" | "FORBIDDEN" | "REASON_REQUIRED";
 
-export type TransitionResult = { ok: true } | { ok: false; error: TransitionError };
+/** Matches the StatusChange model; the caller persists it alongside the status update. */
+export type StatusChangeRecord = {
+  requestId: string;
+  from: RequestStatus;
+  to: RequestStatus;
+  actorId: string;
+  reason: string | null;
+};
+
+export type TransitionResult =
+  { ok: true; change: StatusChangeRecord } | { ok: false; error: TransitionError };
 
 /** Who, relative to a request, may perform a move. */
 type Party = "owner" | "assignedReferrer";
@@ -57,7 +68,7 @@ export function transition(
   request: RequestRef,
   actor: Actor,
   to: RequestStatus,
-  _options: { reason?: string } = {},
+  options: { reason?: string } = {},
 ): TransitionResult {
   const edges = RULES[request.status];
   if (!edges) return { ok: false, error: "TERMINAL_STATUS" };
@@ -68,5 +79,11 @@ export function transition(
   const party = partyOf(request, actor);
   if (!party || !allowedParties.includes(party)) return { ok: false, error: "FORBIDDEN" };
 
-  return { ok: true };
+  const reason = options.reason?.trim() || null;
+  if (to === DECLINED && !reason) return { ok: false, error: "REASON_REQUIRED" };
+
+  return {
+    ok: true,
+    change: { requestId: request.id, from: request.status, to, actorId: actor.id, reason },
+  };
 }
