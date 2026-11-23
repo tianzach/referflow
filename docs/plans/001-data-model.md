@@ -66,3 +66,15 @@ Auth.js wiring, policy functions, UI. Status transition rules are issue #2; quot
 
 - Prisma 7 + adapter API differs from Prisma 5/6 examples online → rely on generated docstrings.
 - `String[]` for companies is Postgres-only; acceptable (we only target Postgres).
+
+## Outcome (after Implement)
+
+All six commits landed as planned, plus two that the plan didn't predict:
+
+- **Prisma 7 `migrate dev` no longer runs `generate`.** The smoke test showed `db.user` was
+  `undefined` until we ran `prisma generate`. `npm run db:migrate` now runs both, and CLAUDE.md
+  records the gotcha.
+- **Vitest 5 failed to start** (`Cannot find native binding`, npm/cli#4828) because the lockfile
+  lacked rolldown's platform bindings. We regenerated the lockfile in its own `chore(deps)` commit.
+  This was caught because we checked _why_ the red test failed, not just _that_ it failed.
+- We added an ESLint rule for `_`-prefixed unused bindings as a refactor step.
