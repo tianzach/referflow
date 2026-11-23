@@ -10,7 +10,11 @@ import {
 
 const { PENDING, APPROVED, DECLINED, REFERRED, INTERVIEWING, OFFER, CLOSED } = RequestStatus;
 
+// Fixtures: every test uses one request owned by candidate-1 and assigned to referrer-1.
 const referrer: Actor = { id: "referrer-1", role: Role.REFERRER };
+const candidate: Actor = { id: "candidate-1", role: Role.CANDIDATE };
+const otherReferrer: Actor = { id: "referrer-2", role: Role.REFERRER };
+const otherCandidate: Actor = { id: "candidate-2", role: Role.CANDIDATE };
 
 function request(status: RequestStatus): RequestRef {
   return { id: "req-1", candidateId: "candidate-1", referrerId: referrer.id, status };
@@ -67,10 +71,6 @@ describe("AC3: DECLINED, OFFER and CLOSED are terminal", () => {
     });
   });
 });
-
-const candidate: Actor = { id: "candidate-1", role: Role.CANDIDATE };
-const otherReferrer: Actor = { id: "referrer-2", role: Role.REFERRER };
-const otherCandidate: Actor = { id: "candidate-2", role: Role.CANDIDATE };
 
 describe("AC4: only the assigned referrer moves a request through the pipeline", () => {
   it.each([
