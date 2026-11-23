@@ -13,23 +13,45 @@ export type TransitionError = "INVALID_TRANSITION" | "TERMINAL_STATUS" | "FORBID
 
 export type TransitionResult = { ok: true } | { ok: false; error: TransitionError };
 
-const NEXT: Partial<Record<RequestStatus, RequestStatus[]>> = {
-  PENDING: [RequestStatus.APPROVED, RequestStatus.DECLINED, RequestStatus.CLOSED],
-  APPROVED: [RequestStatus.REFERRED, RequestStatus.CLOSED],
-  REFERRED: [RequestStatus.INTERVIEWING, RequestStatus.CLOSED],
-  INTERVIEWING: [RequestStatus.OFFER, RequestStatus.CLOSED],
+/** Who, relative to a request, may perform a move. */
+type Party = "owner" | "assignedReferrer";
+
+const { PENDING, APPROVED, DECLINED, REFERRED, INTERVIEWING, OFFER, CLOSED } = RequestStatus;
+
+/**
+ * The single source of truth for the request lifecycle (see docs/architecture.md):
+ * `RULES[from][to]` lists the parties allowed to make that move. A status with no entry is
+ * terminal.
+ */
+const RULES: Partial<Record<RequestStatus, Partial<Record<RequestStatus, Party[]>>>> = {
+  [PENDING]: {
+    [APPROVED]: ["assignedReferrer"],
+    [DECLINED]: ["assignedReferrer"],
+    [CLOSED]: ["owner"],
+  },
+  [APPROVED]: {
+    [REFERRED]: ["assignedReferrer"],
+    [CLOSED]: ["owner", "assignedReferrer"],
+  },
+  [REFERRED]: {
+    [INTERVIEWING]: ["assignedReferrer"],
+    [CLOSED]: ["assignedReferrer"],
+  },
+  [INTERVIEWING]: {
+    [OFFER]: ["assignedReferrer"],
+    [CLOSED]: ["assignedReferrer"],
+  },
 };
 
-const TERMINAL: RequestStatus[] = [
-  RequestStatus.DECLINED,
-  RequestStatus.OFFER,
-  RequestStatus.CLOSED,
-];
+export function isTerminal(status: RequestStatus): boolean {
+  return RULES[status] === undefined;
+}
 
-const CANDIDATE_CAN_WITHDRAW_FROM: RequestStatus[] = [
-  RequestStatus.PENDING,
-  RequestStatus.APPROVED,
-];
+function partyOf(request: RequestRef, actor: Actor): Party | null {
+  if (actor.role === Role.CANDIDATE && actor.id === request.candidateId) return "owner";
+  if (actor.role === Role.REFERRER && actor.id === request.referrerId) return "assignedReferrer";
+  return null;
+}
 
 export function transition(
   request: RequestRef,
@@ -37,25 +59,14 @@ export function transition(
   to: RequestStatus,
   _options: { reason?: string } = {},
 ): TransitionResult {
-  if (TERMINAL.includes(request.status)) {
-    return { ok: false, error: "TERMINAL_STATUS" };
-  }
-  if (!NEXT[request.status]?.includes(to)) {
-    return { ok: false, error: "INVALID_TRANSITION" };
-  }
+  const edges = RULES[request.status];
+  if (!edges) return { ok: false, error: "TERMINAL_STATUS" };
 
-  const isOwner = actor.role === Role.CANDIDATE && actor.id === request.candidateId;
-  const isAssignedReferrer = actor.role === Role.REFERRER && actor.id === request.referrerId;
+  const allowedParties = edges[to];
+  if (!allowedParties) return { ok: false, error: "INVALID_TRANSITION" };
 
-  if (to === RequestStatus.CLOSED) {
-    const allowed =
-      (isOwner && CANDIDATE_CAN_WITHDRAW_FROM.includes(request.status)) ||
-      (isAssignedReferrer && request.status !== RequestStatus.PENDING);
-    return allowed ? { ok: true } : { ok: false, error: "FORBIDDEN" };
-  }
+  const party = partyOf(request, actor);
+  if (!party || !allowedParties.includes(party)) return { ok: false, error: "FORBIDDEN" };
 
-  if (!isAssignedReferrer) {
-    return { ok: false, error: "FORBIDDEN" };
-  }
   return { ok: true };
 }
