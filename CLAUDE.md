@@ -47,6 +47,11 @@ npm run db:generate      # regenerate Prisma Client
 
 Before saying a task is done run: `npm run lint && npm run typecheck && npm test`.
 
+If Vitest fails with `Cannot find native binding` (rolldown) after adding a dependency, npm dropped
+the platform-specific optional packages from the lockfile (npm/cli#4828). Move `node_modules` and
+`package-lock.json` aside and run `npm i` from scratch; check
+`grep -c '"node_modules/@rolldown/binding-' package-lock.json` is non-zero before committing.
+
 ## Architecture decisions (summary — details in docs/architecture.md)
 
 1. **Domain logic is pure and lives in `src/lib/<domain>/`.** Status transitions, quota checks and
