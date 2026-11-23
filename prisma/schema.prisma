@@ -1,7 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// ReferFlow data model. See docs/architecture.md for the domain rules behind it.
+// The datasource URL lives in prisma.config.ts (Prisma 7).
 
 generator client {
   provider = "prisma-client"
@@ -10,4 +8,170 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum Role {
+  CANDIDATE
+  REFERRER
+}
+
+/// Lifecycle of a referral request. Transition rules live in src/lib/referrals/status-machine.ts.
+enum RequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  REFERRED
+  INTERVIEWING
+  OFFER
+  CLOSED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  passwordHash  String?
+  role          Role      @default(CANDIDATE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts         Account[]
+  sessions         Session[]
+  referrerProfile  ReferrerProfile?
+  requestsMade     ReferralRequest[]   @relation("CandidateRequests")
+  requestsReceived ReferralRequest[]   @relation("ReferrerRequests")
+  statusChanges    StatusChange[]
+  privateNotes     PrivateNote[]
+  feedbackWritten  InterviewFeedback[]
+}
+
+// ---------- Auth.js (@auth/prisma-adapter) tables ----------
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------- ReferFlow domain ----------
+
+model ReferrerProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  headline          String?
+  companies         String[]
+  monthlyQuota      Int      @default(5)
+  acceptingRequests Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ReferralRequest {
+  id             String        @id @default(cuid())
+  candidateId    String
+  referrerId     String
+  company        String
+  roleTitle      String
+  jobDescription String        @db.Text
+  jobUrl         String
+  resumeUrl      String
+  candidateNote  String?       @db.Text
+  status         RequestStatus @default(PENDING)
+  declineReason  String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  candidate     User                @relation("CandidateRequests", fields: [candidateId], references: [id], onDelete: Cascade)
+  referrer      User                @relation("ReferrerRequests", fields: [referrerId], references: [id], onDelete: Cascade)
+  statusChanges StatusChange[]
+  privateNotes  PrivateNote[]
+  feedback      InterviewFeedback[]
+
+  @@index([referrerId, status])
+  @@index([candidateId, createdAt])
+}
+
+/// Append-only audit trail. `from` is null for the row written when a request is created.
+model StatusChange {
+  id        String         @id @default(cuid())
+  requestId String
+  from      RequestStatus?
+  to        RequestStatus
+  actorId   String
+  reason    String?
+  createdAt DateTime       @default(now())
+
+  request ReferralRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  actor   User            @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([requestId, createdAt])
+}
+
+/// Referrer-only. Must never be returned to a candidate.
+model PrivateNote {
+  id        String   @id @default(cuid())
+  requestId String
+  authorId  String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  request ReferralRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  author  User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
+
+/// Candidate-visible interview feedback written by the referrer.
+model InterviewFeedback {
+  id        String   @id @default(cuid())
+  requestId String
+  authorId  String
+  round     Int
+  title     String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  request ReferralRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  author  User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([requestId, round])
 }
