@@ -44,3 +44,6 @@ next-env.d.ts
 
 # local env (keep .env.example tracked)
 !.env.example
+
+# Claude Code personal overrides
+.claude/settings.local.json
