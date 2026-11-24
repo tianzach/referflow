@@ -73,6 +73,14 @@ export function canApprove(
   return { ok: true, remaining };
 }
 
+/**
+ * Trim, collapse inner whitespace, lowercase: " Jane  STREET" matches "Jane Street" (AC4, AC5),
+ * but "Stripe Inc" still isn't "Stripe".
+ */
+function normalize(text: string): string {
+  return text.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 export function canSubmitRequest(
   candidateId: string,
   referrer: SubmitReferrer,
@@ -81,22 +89,19 @@ export function canSubmitRequest(
 ): SubmitResult {
   if (!referrer.acceptingRequests) return { ok: false, error: "NOT_ACCEPTING" };
 
-  const company = input.company.trim().replace(/\s+/g, " ").toLowerCase();
-  const offered = referrer.companies.some(
-    (name) => name.trim().replace(/\s+/g, " ").toLowerCase() === company,
-  );
-  if (!offered) return { ok: false, error: "COMPANY_NOT_OFFERED" };
+  const company = normalize(input.company);
+  if (!referrer.companies.some((name) => normalize(name) === company)) {
+    return { ok: false, error: "COMPANY_NOT_OFFERED" };
+  }
 
-  const roleTitle = input.roleTitle.trim().replace(/\s+/g, " ").toLowerCase();
-  const duplicate = existing.some(
-    (request) =>
-      request.candidateId === candidateId &&
-      request.referrerId === referrer.userId &&
-      request.company.trim().replace(/\s+/g, " ").toLowerCase() === company &&
-      request.roleTitle.trim().replace(/\s+/g, " ").toLowerCase() === roleTitle &&
-      !isTerminal(request.status),
-  );
-  if (duplicate) return { ok: false, error: "DUPLICATE_ACTIVE_REQUEST" };
+  const roleTitle = normalize(input.roleTitle);
+  const isActiveDuplicate = (request: ExistingRequest) =>
+    request.candidateId === candidateId &&
+    request.referrerId === referrer.userId &&
+    normalize(request.company) === company &&
+    normalize(request.roleTitle) === roleTitle &&
+    !isTerminal(request.status);
+  if (existing.some(isActiveDuplicate)) return { ok: false, error: "DUPLICATE_ACTIVE_REQUEST" };
 
   return { ok: true };
 }
