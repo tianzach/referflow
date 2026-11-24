@@ -4,10 +4,11 @@
   extension, then the CLI via `claude --continue`), model Claude Opus 5.5, auto mode
 - **Covers:** C.L.E.A.R. review and merge of PR #5, issue #3 Explore → **Plan mode** → strict TDD
   (4 red → green cycles, 2 refactors) → PR #6, plus the three context-management moments:
-  `/compact` (Phase 4/5 boundary), `claude --continue` (Phase 7) and `/clear` (after this log).
+  `/compact` (Phase 4/5 boundary), `claude --continue` (Phase 7) and `/clear` (end of this log).
 - **Screenshots:** [`partner-01-plan-mode.png`](screenshots/partner-01-plan-mode.png) ·
   [`partner-02-compact.png`](screenshots/partner-02-compact.png) ·
-  [`partner-03-continue.png`](screenshots/partner-03-continue.png)
+  [`partner-03-continue.png`](screenshots/partner-03-continue.png) ·
+  [`partner-04-clear.png`](screenshots/partner-04-clear.png)
 - **How this was produced:** `scripts/render-session-log.py` on the session's JSONL transcript,
   stopped before the steps that wrote this log. Tool calls are collapsed and long outputs are
   truncated. Emails, home paths, the local username and internal agent IDs are scrubbed. The
@@ -348,7 +349,7 @@ cd "~/Vibe P3/referflow" && cat README.md && echo ===== && grep -n -i "partner\|
 ```
 
 Result:
-```
+````
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
@@ -365,7 +366,7 @@ pnpm dev
 bun dev
 ```
 … (151 more lines)
-```
+````
 </details>
 
 **🤖 Claude:** I have the full picture now. Quick check of my permissions on the repo, CI state of PR #5, and local toolchain before I start.
@@ -1135,7 +1136,7 @@ cd "~/Vibe P3/referflow" && git switch -q main && git pull -q && git switch -c f
 
 <details><summary>🔧 #40 Write — ~/Vibe P3/referflow/docs/plans/003-quota-guard.md</summary>
 
-```
+````
 # Plan 003 — Referrer quota and duplicate-request guard (issue #3)
 
 Workflow: Explore → **Plan** (Claude Code Plan mode) → Implement (strict TDD) → Commit. HW4 Parts 2–3,
@@ -1162,7 +1163,7 @@ partner side. This file is the plan approved in Plan mode, copied into the repo.
 ```ts
 quotaUsage(profile, requests, now) → { referredThisMonth, approvedNotYetReferred, remaining }
 … (42 more lines)
-```
+````
 
 Result:
 ```
@@ -1217,7 +1218,7 @@ The file ~/.claude/projects/-Users-USER-Vibe-P3/memory/hw4-progress.md has been 
 
 **Done so far:**
 - **PR #5:** I re-ran every commit in its history to confirm the TDD order is real: each `red` commit fails and each `green` passes. I posted an approving C.L.E.A.R. review with two non-blocking follow-ups and merged it with a merge commit (`4343c0b`). Issue #2 is closed.
-- **Issue #3, Explore and Plan:** I mapped the relevant code, then designed the feature in Plan mode with a second, independent Plan subagent as a cross-check. You approved the plan, and it's committed on `feature/3-quota-guard` as [docs/plans/003-quota-guard.md](referflow/docs/plans/003-quota-guard.md) (`86d9329`).
+- **Issue #3, Explore and Plan:** I mapped the relevant code, then designed the feature in Plan mode with a second, independent Plan subagent as a cross-check. You approved the plan, and it's committed on `feature/3-quota-guard` as [docs/plans/003-quota-guard.md](../plans/003-quota-guard.md) (`86d9329`).
 - **Setup:** I installed Node 24 through Homebrew without replacing your default Node 20. On Node 20, Vitest's error output crashes, so failing ("red") test runs look like tooling errors.
 
 **Your turn (about 1 minute).** Save screenshots in `referflow/docs/session-logs/screenshots/`.
@@ -2631,7 +2632,7 @@ cd "~/Vibe P3/referflow" && sed -n 203p src/lib/referrals/quota.test.ts && cat C
 ```
 
 Result:
-```
+````
 describe("AC5: rejects companies the referrer doesn't offer, and referrers who aren't accepting", () => {
 ## Commands
 
@@ -2648,7 +2649,7 @@ npm run test:coverage    # fails below 70% on src/lib/**
 docker compose up -d     # local Postgres (creds in .env.example)
 npm run db:migrate       # prisma migrate dev + generate (needs DATABASE_URL)
 … (11 more lines)
-```
+````
 </details>
 
 **🤖 Claude:** That line is a test name Prettier won't split, so it stays. Now step 4: add the one-line Node 24 note to CLAUDE.md.
@@ -3105,12 +3106,12 @@ partner-01-plan-mode.png
 - **TDD:** four red → green cycles and two refactors, 10 commits. I re-ran the quota tests at every commit:
   - Each red fails for the expected reason: first the module is missing, then 11, 9 and 7 failures.
   - Each green passes, and both refactors keep the same count.
-- **[quota.ts](src/lib/referrals/quota.ts):** reuses `isTerminal` from the status machine, as the issue asked.
+- **[quota.ts](../../src/lib/referrals/quota.ts):** reuses `isTerminal` from the status machine, as the issue asked.
 - **Tests:** 121 pass across the whole suite, with 100% coverage on `quota.ts`.
 - **Time zones:** the month-boundary tests (AC3) run in a time zone 14 hours ahead of UTC. Otherwise CI, which runs in UTC, couldn't catch code that uses local months. I checked that the guard works: switching to local-month code makes 3 of those tests fail.
 - **Small extra edits:**
-  - One line in [CLAUDE.md](CLAUDE.md) saying to use Node 24, because on Node 20 failing test runs crash the error output. I promised this in the PR #5 review.
-  - An Outcome section in [003-quota-guard.md](docs/plans/003-quota-guard.md).
+  - One line in [CLAUDE.md](../../CLAUDE.md) saying to use Node 24, because on Node 20 failing test runs crash the error output. I promised this in the PR #5 review.
+  - An Outcome section in [003-quota-guard.md](../plans/003-quota-guard.md).
 - **Not touched:** CI, configs, `docs/hw4/README.md`, and reflection Q1/Q2.
 
 **Your turn (about 2 minutes).**
@@ -3346,3 +3347,12 @@ Now I am done with 3 screenshots what we do next?
 
 _Log ends after step 102. The remaining steps only generated this log and the HW4 docs._
 
+---
+
+## 📝 `/clear`, then a fresh-context check
+
+> **Annotation:** After this log was pushed, the user ran `/clear`
+> ([`partner-04-clear.png`](screenshots/partner-04-clear.png)) and asked the fresh session to check
+> PR #6's deliverables. With no chat history, it worked from the repo, `gh` and its auto-memory
+> notes. The check found that GitHub ended some code blocks in this log early, so the fences were
+> fixed in `scripts/render-session-log.py` and this log was re-rendered.
