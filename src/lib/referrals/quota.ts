@@ -5,6 +5,7 @@ import type {
   StatusChangeModel,
 } from "@/generated/prisma/models";
 import type { NewReferralRequestInput } from "./request-input";
+import { isTerminal } from "./status-machine";
 
 export type QuotaProfile = Pick<ReferrerProfileModel, "userId" | "monthlyQuota">;
 
@@ -73,10 +74,10 @@ export function canApprove(
 }
 
 export function canSubmitRequest(
-  _candidateId: string,
+  candidateId: string,
   referrer: SubmitReferrer,
   input: SubmitInput,
-  _existing: readonly ExistingRequest[],
+  existing: readonly ExistingRequest[],
 ): SubmitResult {
   if (!referrer.acceptingRequests) return { ok: false, error: "NOT_ACCEPTING" };
 
@@ -85,6 +86,17 @@ export function canSubmitRequest(
     (name) => name.trim().replace(/\s+/g, " ").toLowerCase() === company,
   );
   if (!offered) return { ok: false, error: "COMPANY_NOT_OFFERED" };
+
+  const roleTitle = input.roleTitle.trim().replace(/\s+/g, " ").toLowerCase();
+  const duplicate = existing.some(
+    (request) =>
+      request.candidateId === candidateId &&
+      request.referrerId === referrer.userId &&
+      request.company.trim().replace(/\s+/g, " ").toLowerCase() === company &&
+      request.roleTitle.trim().replace(/\s+/g, " ").toLowerCase() === roleTitle &&
+      !isTerminal(request.status),
+  );
+  if (duplicate) return { ok: false, error: "DUPLICATE_ACTIVE_REQUEST" };
 
   return { ok: true };
 }
