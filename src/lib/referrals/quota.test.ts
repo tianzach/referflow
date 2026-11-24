@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RequestStatus } from "@/generated/prisma/enums";
-import { quotaUsage } from "./quota";
+import { canApprove, quotaUsage } from "./quota";
 
 const { PENDING, APPROVED, DECLINED, REFERRED, INTERVIEWING, CLOSED } = RequestStatus;
 
@@ -33,6 +33,19 @@ function referredAt(at: string, referrerId = REFERRER) {
     ],
     referrerId,
   );
+}
+
+/** Approved at `at` and still waiting to be referred. */
+function approvedAt(at: string, referrerId = REFERRER) {
+  return request(at, [[APPROVED, at]], referrerId);
+}
+
+/** `referred` requests referred this month plus `approved` requests still waiting. */
+function requests(referred: number, approved: number) {
+  return [
+    ...Array.from({ length: referred }, (_, i) => referredAt(`2026-11-0${i + 2}T10:00:00Z`)),
+    ...Array.from({ length: approved }, () => approvedAt("2026-11-10T10:00:00Z")),
+  ];
 }
 
 describe("AC1: counts requests that reached REFERRED in the current UTC month", () => {
@@ -124,5 +137,48 @@ describe("AC3: month boundaries are UTC", () => {
     ["2026-01-15T10:00:00Z", "2027-01-20T10:00:00Z", 0, "does not count a year later"],
   ])("a referral at %s, seen at %s → %i (%s)", (at, now, expected) => {
     expect(quotaUsage(profile, [referredAt(at)], new Date(now)).referredThisMonth).toBe(expected);
+  });
+});
+
+describe("AC2: canApprove stops at the monthly quota, counting approved-but-not-referred", () => {
+  it.each([
+    // referred this month, approved and waiting, monthly quota → result
+    [0, 0, 3, { ok: true, remaining: 3 }],
+    [2, 0, 3, { ok: true, remaining: 1 }],
+    [1, 1, 3, { ok: true, remaining: 1 }],
+    [3, 0, 3, { ok: false, error: "QUOTA_EXCEEDED" }],
+    [2, 1, 3, { ok: false, error: "QUOTA_EXCEEDED" }],
+    [0, 3, 3, { ok: false, error: "QUOTA_EXCEEDED" }],
+    [0, 0, 0, { ok: false, error: "QUOTA_EXCEEDED" }],
+  ])("%i referred + %i approved, quota %i → %o", (referred, approved, monthlyQuota, expected) => {
+    const result = canApprove({ ...profile, monthlyQuota }, requests(referred, approved), NOW);
+    expect(result).toEqual(expected);
+  });
+
+  it("reports both counts and the remaining slots", () => {
+    expect(quotaUsage(profile, requests(1, 1), NOW)).toEqual({
+      referredThisMonth: 1,
+      approvedNotYetReferred: 1,
+      remaining: 1,
+    });
+  });
+
+  it("counts a request approved last month that is still waiting to be referred", () => {
+    const waiting = approvedAt("2026-10-20T10:00:00Z");
+    expect(quotaUsage(profile, [waiting], NOW).approvedNotYetReferred).toBe(1);
+  });
+
+  it("ignores other referrers' approved requests", () => {
+    const theirs = approvedAt("2026-11-10T10:00:00Z", "referrer-2");
+    expect(quotaUsage(profile, [theirs], NOW).approvedNotYetReferred).toBe(0);
+  });
+
+  it("never reports negative remaining when the quota is lowered below this month's usage", () => {
+    const lowered = { ...profile, monthlyQuota: 1 };
+    expect(quotaUsage(lowered, requests(2, 1), NOW).remaining).toBe(0);
+    expect(canApprove(lowered, requests(2, 1), NOW)).toEqual({
+      ok: false,
+      error: "QUOTA_EXCEEDED",
+    });
   });
 });
