@@ -6,7 +6,8 @@ Commit), #2 status machine (TDD), #3 quota guard (TDD, partner)._
 ## 1. How does Explore → Plan → Implement → Commit compare to our previous approach?
 
 In earlier projects our loop with an AI assistant was mostly "describe the feature, get code, fix
-whatever breaks". That works for small UI changes. It goes wrong when the assistant's training data
+whatever breaks". There was no written plan, and tests came afterwards, if at all. That works for
+small UI changes. It goes wrong when the assistant's training data
 is older than the libraries it's using, and this repo runs Next.js 16, Prisma 7, Zod 4 and Vitest 5,
 all newer than most examples online.
 
