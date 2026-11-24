@@ -65,3 +65,34 @@ How each ambiguity in the issue is resolved:
 Server Actions, UI and DB integration tests, which come in later issues. The A01 note from the
 PR #5 review (a user who isn't a party to the request must get a generic error before any status
 detail) belongs to the action-layer issue.
+
+## Outcome (after Implement)
+
+All four cycles and both refactors landed as planned (10 commits). Replaying
+`quota.test.ts` at each commit on Node 24:
+
+| Commit    | Step  | Result                                                     |
+| --------- | ----- | ---------------------------------------------------------- |
+| `e16e52e` | C1 🔴 | suite fails: `Cannot find module './quota'`                |
+| `338342e` | C1 🟢 | 16 passed                                                  |
+| `5e882e0` | C2 🔴 | 11 failed (`canApprove is not a function`), 16 passed      |
+| `60c329a` | C2 🟢 | 27 passed                                                  |
+| `79769cd` | R1    | 27 passed                                                  |
+| `69dc9a1` | C3 🔴 | 9 failed (`canSubmitRequest is not a function`), 27 passed |
+| `1c3616b` | C3 🟢 | 36 passed                                                  |
+| `f149420` | C4 🔴 | 7 failed (`expected { ok: true }`), 44 passed              |
+| `c4f6763` | C4 🟢 | 51 passed                                                  |
+| `fcf0313` | R2    | 51 passed                                                  |
+
+Two things the plan didn't predict:
+
+- **The UTC tests needed a non-UTC zone to mean anything.** CI and most laptops run in UTC, where
+  `getMonth()` and `getUTCMonth()` agree. The AC3 block therefore stubs `TZ=Pacific/Kiritimati`
+  (UTC+14) and first asserts that the stub took effect. Swapping in the local-time getters makes 3
+  AC3 cases fail, which confirms the guard works.
+- **C4's red was partial by design.** The AC6 cases ("ended requests don't block"), the "does not
+  count" cases and the precedence test already passed before the duplicate check existed. They are
+  guards that the green step must not break, and the commit body says so.
+
+Full suite at the end: lint, format and typecheck are clean; 121/121 tests pass; `quota.ts` has
+100% statements, branches, functions and lines.
