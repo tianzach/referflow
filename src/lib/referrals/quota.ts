@@ -4,6 +4,7 @@ import type {
   ReferrerProfileModel,
   StatusChangeModel,
 } from "@/generated/prisma/models";
+import type { NewReferralRequestInput } from "./request-input";
 
 export type QuotaProfile = Pick<ReferrerProfileModel, "userId" | "monthlyQuota">;
 
@@ -20,6 +21,19 @@ export type QuotaUsage = {
 
 export type ApproveResult =
   { ok: true; remaining: number } | { ok: false; error: "QUOTA_EXCEEDED" };
+
+export type SubmitReferrer = Pick<
+  ReferrerProfileModel,
+  "userId" | "companies" | "acceptingRequests"
+>;
+export type SubmitInput = Pick<NewReferralRequestInput, "company" | "roleTitle">;
+export type ExistingRequest = Pick<
+  ReferralRequestModel,
+  "candidateId" | "referrerId" | "company" | "roleTitle" | "status"
+>;
+
+export type SubmitError = "NOT_ACCEPTING" | "COMPANY_NOT_OFFERED" | "DUPLICATE_ACTIVE_REQUEST";
+export type SubmitResult = { ok: true } | { ok: false; error: SubmitError };
 
 /** Month boundaries are UTC (AC3), so never use the local-time getters here. */
 function sameUtcMonth(a: Date, b: Date): boolean {
@@ -56,4 +70,21 @@ export function canApprove(
   const { remaining } = quotaUsage(profile, requests, now);
   if (remaining === 0) return { ok: false, error: "QUOTA_EXCEEDED" };
   return { ok: true, remaining };
+}
+
+export function canSubmitRequest(
+  _candidateId: string,
+  referrer: SubmitReferrer,
+  input: SubmitInput,
+  _existing: readonly ExistingRequest[],
+): SubmitResult {
+  if (!referrer.acceptingRequests) return { ok: false, error: "NOT_ACCEPTING" };
+
+  const company = input.company.trim().replace(/\s+/g, " ").toLowerCase();
+  const offered = referrer.companies.some(
+    (name) => name.trim().replace(/\s+/g, " ").toLowerCase() === company,
+  );
+  if (!offered) return { ok: false, error: "COMPANY_NOT_OFFERED" };
+
+  return { ok: true };
 }
