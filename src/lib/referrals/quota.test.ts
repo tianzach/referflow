@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RequestStatus } from "@/generated/prisma/enums";
 import { canApprove, canSubmitRequest, quotaUsage } from "./quota";
 
-const { PENDING, APPROVED, DECLINED, REFERRED, INTERVIEWING, CLOSED } = RequestStatus;
+const { PENDING, APPROVED, DECLINED, REFERRED, INTERVIEWING, OFFER, CLOSED } = RequestStatus;
 
 // Fixtures: referrer-1 offers 3 referrals a month; "now" is mid-November 2026 unless a test says
 // otherwise. All timestamps are UTC.
@@ -52,6 +52,18 @@ function requests(referred: number, approved: number) {
 const CANDIDATE = "candidate-1";
 const referrer = { userId: REFERRER, companies: ["Stripe", "Google"], acceptingRequests: true };
 const input = { company: "Stripe", roleTitle: "New Grad Software Engineer" };
+
+type ExistingFields = {
+  candidateId: string;
+  referrerId: string;
+  company: string;
+  roleTitle: string;
+};
+
+/** A request candidate-1 already made to referrer-1 for the same company and role as `input`. */
+function existing(status: RequestStatus, overrides: Partial<ExistingFields> = {}) {
+  return { candidateId: CANDIDATE, referrerId: REFERRER, ...input, status, ...overrides };
+}
 
 describe("AC1: counts requests that reached REFERRED in the current UTC month", () => {
   it.each([
@@ -233,5 +245,65 @@ describe("AC5: rejects companies the referrer doesn't offer, and referrers who a
     const paused = { ...referrer, acceptingRequests: false };
     const result = canSubmitRequest(CANDIDATE, paused, { ...input, company: "Meta" }, []);
     expect(result).toEqual({ ok: false, error: "NOT_ACCEPTING" });
+  });
+});
+
+describe("AC4: rejects a duplicate while an earlier request is still active", () => {
+  it.each([PENDING, APPROVED, REFERRED, INTERVIEWING])(
+    "blocks while the earlier one is %s",
+    (status) => {
+      expect(canSubmitRequest(CANDIDATE, referrer, input, [existing(status)])).toEqual({
+        ok: false,
+        error: "DUPLICATE_ACTIVE_REQUEST",
+      });
+    },
+  );
+
+  it.each([
+    ["case", { company: "STRIPE", roleTitle: "new grad software engineer" }],
+    ["whitespace", { company: " Stripe ", roleTitle: "New  Grad Software   Engineer " }],
+  ])("matches company and role regardless of %s", (_label, stored) => {
+    expect(canSubmitRequest(CANDIDATE, referrer, input, [existing(PENDING, stored)])).toEqual({
+      ok: false,
+      error: "DUPLICATE_ACTIVE_REQUEST",
+    });
+  });
+
+  it.each([
+    ["another candidate's request", { candidateId: "candidate-2" }],
+    ["a request to another referrer", { referrerId: "referrer-2" }],
+    ["a different role at the same company", { roleTitle: "Senior Software Engineer" }],
+    ["the same role at another company", { company: "Google" }],
+  ])("does not count %s", (_label, overrides) => {
+    expect(canSubmitRequest(CANDIDATE, referrer, input, [existing(PENDING, overrides)])).toEqual({
+      ok: true,
+    });
+  });
+
+  it("reports NOT_ACCEPTING and COMPANY_NOT_OFFERED before DUPLICATE_ACTIVE_REQUEST", () => {
+    const active = [existing(PENDING), existing(PENDING, { company: "Meta" })];
+    const paused = { ...referrer, acceptingRequests: false };
+    expect(canSubmitRequest(CANDIDATE, paused, input, active)).toEqual({
+      ok: false,
+      error: "NOT_ACCEPTING",
+    });
+    expect(canSubmitRequest(CANDIDATE, referrer, { ...input, company: "Meta" }, active)).toEqual({
+      ok: false,
+      error: "COMPANY_NOT_OFFERED",
+    });
+  });
+});
+
+describe("AC6: a request that has ended does not block a new one", () => {
+  it.each([DECLINED, CLOSED, OFFER])("allows a new request after a %s one", (status) => {
+    expect(canSubmitRequest(CANDIDATE, referrer, input, [existing(status)])).toEqual({ ok: true });
+  });
+
+  it("still blocks when an ended request is listed before an active one", () => {
+    const history = [existing(DECLINED), existing(PENDING)];
+    expect(canSubmitRequest(CANDIDATE, referrer, input, history)).toEqual({
+      ok: false,
+      error: "DUPLICATE_ACTIVE_REQUEST",
+    });
   });
 });
