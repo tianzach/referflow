@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RequestStatus } from "@/generated/prisma/enums";
-import { canApprove, quotaUsage } from "./quota";
+import { canApprove, canSubmitRequest, quotaUsage } from "./quota";
 
 const { PENDING, APPROVED, DECLINED, REFERRED, INTERVIEWING, CLOSED } = RequestStatus;
 
@@ -47,6 +47,11 @@ function requests(referred: number, approved: number) {
     ...Array.from({ length: approved }, () => approvedAt("2026-11-10T10:00:00Z")),
   ];
 }
+
+// Submission fixtures: candidate-1 asks referrer-1, who refers to Stripe and Google.
+const CANDIDATE = "candidate-1";
+const referrer = { userId: REFERRER, companies: ["Stripe", "Google"], acceptingRequests: true };
+const input = { company: "Stripe", roleTitle: "New Grad Software Engineer" };
 
 describe("AC1: counts requests that reached REFERRED in the current UTC month", () => {
   it.each([
@@ -180,5 +185,53 @@ describe("AC2: canApprove stops at the monthly quota, counting approved-but-not-
       ok: false,
       error: "QUOTA_EXCEEDED",
     });
+  });
+});
+
+describe("AC5: rejects companies the referrer doesn't offer, and referrers who aren't accepting", () => {
+  it("accepts a request for an offered company", () => {
+    expect(canSubmitRequest(CANDIDATE, referrer, input, [])).toEqual({ ok: true });
+  });
+
+  it.each([
+    ["different case", "stripe", ["Stripe"]],
+    ["surrounding spaces", "  STRIPE ", ["Stripe"]],
+    ["different inner spacing", "Jane  Street", ["jane street"]],
+  ])("matches the company despite %s", (_label, company, companies) => {
+    const result = canSubmitRequest(
+      CANDIDATE,
+      { ...referrer, companies },
+      { ...input, company },
+      [],
+    );
+    expect(result).toEqual({ ok: true });
+  });
+
+  it.each([
+    ["a company not in the list", "Meta", ["Stripe", "Google"]],
+    ["a longer name that only starts the same", "Stripe Inc", ["Stripe"]],
+    ["an empty company list", "Stripe", []],
+  ])("rejects %s with COMPANY_NOT_OFFERED", (_label, company, companies) => {
+    const result = canSubmitRequest(
+      CANDIDATE,
+      { ...referrer, companies },
+      { ...input, company },
+      [],
+    );
+    expect(result).toEqual({ ok: false, error: "COMPANY_NOT_OFFERED" });
+  });
+
+  it("rejects with NOT_ACCEPTING when the referrer has paused requests", () => {
+    const paused = { ...referrer, acceptingRequests: false };
+    expect(canSubmitRequest(CANDIDATE, paused, input, [])).toEqual({
+      ok: false,
+      error: "NOT_ACCEPTING",
+    });
+  });
+
+  it("reports NOT_ACCEPTING before COMPANY_NOT_OFFERED", () => {
+    const paused = { ...referrer, acceptingRequests: false };
+    const result = canSubmitRequest(CANDIDATE, paused, { ...input, company: "Meta" }, []);
+    expect(result).toEqual({ ok: false, error: "NOT_ACCEPTING" });
   });
 });
