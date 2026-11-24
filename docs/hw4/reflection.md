@@ -1,12 +1,13 @@
 # HW4 Reflection: Claude Code Workflow & TDD
 
-_ReferFlow pair: Zichen Tian and partner. Features: #1 data model (Explore → Plan → Implement →
+_ReferFlow pair: Zichen Tian and Zheqi Lv. Features: #1 data model (Explore → Plan → Implement →
 Commit), #2 status machine (TDD), #3 quota guard (TDD, partner)._
 
 ## 1. How does Explore → Plan → Implement → Commit compare to our previous approach?
 
 In earlier projects our loop with an AI assistant was mostly "describe the feature, get code, fix
-whatever breaks". That works for small UI changes. It goes wrong when the assistant's training data
+whatever breaks". There was no written plan, and tests came afterwards, if at all. That works for
+small UI changes. It goes wrong when the assistant's training data
 is older than the libraries it's using, and this repo runs Next.js 16, Prisma 7, Zod 4 and Vitest 5,
 all newer than most examples online.
 
@@ -48,6 +49,18 @@ checks that `allowedTransitions` and `transition()` agree for every status × ac
 risk is that an AI can "pass" a test by special-casing it. Committing the red tests separately and
 reviewing the green diff against them is what guards against that.
 
+**Review in a separate session.** PR #5 was written in Zichen's session and reviewed in Zheqi's,
+with Claude acting as the reviewer agent (writer/reviewer pattern). Because the reviewer started from
+a clean context, it was not anchored on the writer's reasoning. It re-ran the test file at every
+commit to check that each red failed on an assertion and each refactor kept the count unchanged. It
+also found two issues the writer had missed: on Node 20, Vitest's failure reporter crashes, so a red
+run looks like a tooling error; and the domain function returns `TERMINAL_STATUS` before
+`FORBIDDEN`, so the Server Action must run the ownership check first or it leaks another candidate's
+request status. Both became notes for later issues instead of being lost in a chat. For PR #6 we
+swapped roles. The reviewer re-ran two red commits, and their failure counts matched the PR. It also
+flagged that the quota check is read-then-write, so the Server Action needs a serializable
+transaction.
+
 ## 2. What context management strategies worked best?
 
 1. **Put durable facts in files, not in the chat.** `CLAUDE.md` `@import`s the PRD and
@@ -60,7 +73,9 @@ reviewing the green diff against them is what guards against that.
    the commit history are all on disk, a new session can recover after `/clear` or
    `claude --continue` with one prompt: "read the plan and `git log --oneline -5`, continue".
 4. **Add compact instructions to `CLAUDE.md`.** These tell `/compact` (manual or automatic) to keep
-   the issue number, ACs, TDD phase and failing output, and to drop exploration dumps.
+   the issue number, ACs, TDD phase and failing output, and to drop exploration dumps. In Zheqi's
+   #3 session, compacting at the Plan → Implement boundary kept the ACs and the cycle table word
+   for word. Exact file text didn't survive, so Claude re-read files before editing them.
 5. **One issue per session.** Starting each issue with `/clear` keeps unrelated exploration from
    leaking into the next feature.
 

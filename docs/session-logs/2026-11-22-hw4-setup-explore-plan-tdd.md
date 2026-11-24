@@ -27,17 +27,17 @@
 <details><summary>🔧 #1 Bash — List project files and memory index</summary>
 
 ```
-cd "~/Desktop/AI coding/Project3" && ls -la && wc -l * 2>/dev/null; cat ~/.claude/projects/-Users-zact-Desktop-AI-coding-Project3/memory/MEMORY.md 2>/dev/null
+cd "~/Desktop/AI coding/Project3" && ls -la && wc -l * 2>/dev/null; cat ~/.claude/projects/-Users-<user>-Desktop-AI-coding-Project3/memory/MEMORY.md 2>/dev/null
 ```
 
 Result:
 ```
 Exit code 1
 total 32
-drwxr-xr-x@  4 zact  staff   128 Nov 22 21:19 .
-drwxr-xr-x  10 zact  staff   320 Nov 22 21:16 ..
--rw-r--r--   1 zact  staff  2439 Nov 22 21:19 PRD.md
--rw-r--r--   1 zact  staff  8317 Nov 22 21:17 REQUIREMENTS.md
+drwxr-xr-x@  4 <user>  staff   128 Nov 22 21:19 .
+drwxr-xr-x  10 <user>  staff   320 Nov 22 21:16 ..
+-rw-r--r--   1 <user>  staff  2439 Nov 22 21:19 PRD.md
+-rw-r--r--   1 <user>  staff  8317 Nov 22 21:17 REQUIREMENTS.md
       23 PRD.md
      163 REQUIREMENTS.md
      186 total
@@ -74,7 +74,7 @@ Job referrals are usually managed through scattered LinkedIn DMs, emails, and sp
 <details><summary>🔧 #3 Bash — Check toolchain and GitHub auth</summary>
 
 ```
-gh auth status 2>&1; node -v; npm -v; git --version; git config --global user.name; which psql docker pnpm; ls ~/.claude/projects/-Users-zact-Desktop-AI-coding-Project3/
+gh auth status 2>&1; node -v; npm -v; git --version; git config --global user.name; which psql docker pnpm; ls ~/.claude/projects/-Users-<user>-Desktop-AI-coding-Project3/
 ```
 
 Result:
@@ -107,13 +107,13 @@ Result:
 ```
 Exit code 1
 total 0
-drwxr-xr-x@  7 zact  staff   224 Nov 13 13:59 .
-drwxr-xr-x  10 zact  staff   320 Nov 22 21:16 ..
-drwxr-xr-x@ 34 zact  staff  1088 Nov 15 21:58 FairShare
-drwxr-xr-x@ 11 zact  staff   352 Oct 28 17:03 FairShare-no-rules
-drwxr-xr-x@ 14 zact  staff   448 Oct 28 17:03 FairShare-with-rules
-drwxr-xr-x   6 zact  staff   192 Oct 29 00:04 HW3-submission
-drwxr-xr-x   4 zact  staff   128 Nov 13 13:59 P2-submission-drafts
+drwxr-xr-x@  7 <user>  staff   224 Nov 13 13:59 .
+drwxr-xr-x  10 <user>  staff   320 Nov 22 21:16 ..
+drwxr-xr-x@ 34 <user>  staff  1088 Nov 15 21:58 FairShare
+drwxr-xr-x@ 11 <user>  staff   352 Oct 28 17:03 FairShare-no-rules
+drwxr-xr-x@ 14 <user>  staff   448 Oct 28 17:03 FairShare-with-rules
+drwxr-xr-x   6 <user>  staff   192 Oct 29 00:04 HW3-submission
+drwxr-xr-x   4 <user>  staff   128 Nov 13 13:59 P2-submission-drafts
 ```
 </details>
 
@@ -126,20 +126,20 @@ cd "~/Desktop/AI coding/Project2/FairShare" && ls -la && git remote -v && git lo
 Result:
 ```
 total 1304
-drwxr-xr-x@  34 zact  staff    1088 Nov 15 21:58 .
-drwxr-xr-x@   7 zact  staff     224 Nov 13 13:59 ..
-drwxr-xr-x    3 zact  staff      96 Nov 13 12:51 .claude
--rw-r--r--    1 zact  staff     187 Nov 10 23:10 .env
--rw-r--r--    1 zact  staff    1266 Nov 10 22:46 .env.example
--rw-r--r--    1 zact  staff    1285 Nov 13 13:03 .env.local
--rw-r--r--    1 zact  staff      74 Nov  6 16:59 .eslintrc.json
-drwxr-xr-x   16 zact  staff     512 Nov 15 21:58 .git
-drwxr-xr-x    4 zact  staff     128 Nov 10 22:46 .github
--rw-r--r--    1 zact  staff     342 Nov 13 16:42 .gitignore
-drwxr-xr-x@  21 zact  staff     672 Nov 13 16:52 .next
-drwxr-xr-x    4 zact  staff     128 Nov 13 13:03 .vercel
--rw-r--r--    1 zact  staff   13103 Nov 11 00:15 AGENTS.md
--rw-r--r--    1 zact  staff   14987 Nov 15 21:58 README.md
+drwxr-xr-x@  34 <user>  staff    1088 Nov 15 21:58 .
+drwxr-xr-x@   7 <user>  staff     224 Nov 13 13:59 ..
+drwxr-xr-x    3 <user>  staff      96 Nov 13 12:51 .claude
+-rw-r--r--    1 <user>  staff     187 Nov 10 23:10 .env
+-rw-r--r--    1 <user>  staff    1266 Nov 10 22:46 .env.example
+-rw-r--r--    1 <user>  staff    1285 Nov 13 13:03 .env.local
+-rw-r--r--    1 <user>  staff      74 Nov  6 16:59 .eslintrc.json
+drwxr-xr-x   16 <user>  staff     512 Nov 15 21:58 .git
+drwxr-xr-x    4 <user>  staff     128 Nov 10 22:46 .github
+-rw-r--r--    1 <user>  staff     342 Nov 13 16:42 .gitignore
+drwxr-xr-x@  21 <user>  staff     672 Nov 13 16:52 .next
+drwxr-xr-x    4 <user>  staff     128 Nov 13 13:03 .vercel
+-rw-r--r--    1 <user>  staff   13103 Nov 11 00:15 AGENTS.md
+-rw-r--r--    1 <user>  staff   14987 Nov 15 21:58 README.md
 … (92 more lines)
 ```
 </details>
@@ -254,20 +254,20 @@ S=$SCRATCH/referflow; cd $S && ls -la && cat package.json && cat AGENTS.md CLAUD
 Result:
 ```
 total 520
-drwxr-xr-x   16 zact  wheel     512 Nov 22 21:23 .
-drwxr-xr-x    3 zact  wheel      96 Nov 22 21:22 ..
-drwxr-xr-x   12 zact  wheel     384 Nov 22 21:23 .git
--rw-r--r--    1 zact  staff     480 Nov 22 21:22 .gitignore
-drwxr-xr-x    3 zact  wheel      96 Nov 22 21:23 .next
--rw-r--r--    1 zact  wheel     679 Nov 22 21:23 AGENTS.md
--rw-r--r--    1 zact  staff    1450 Nov 22 21:22 README.md
--rw-r--r--    1 zact  staff     465 Nov 22 21:22 eslint.config.mjs
--rw-r--r--    1 zact  staff     288 Nov 22 21:23 next-env.d.ts
--rw-r--r--    1 zact  staff     318 Nov 22 21:22 next.config.ts
-drwxr-xr-x  293 zact  wheel    9376 Nov 22 21:23 node_modules
--rw-r--r--    1 zact  wheel  233393 Nov 22 21:23 package-lock.json
--rw-r--r--    1 zact  wheel     539 Nov 22 21:22 package.json
-drwxr-xr-x    7 zact  wheel     224 Nov 22 21:22 public
+drwxr-xr-x   16 <user>  wheel     512 Nov 22 21:23 .
+drwxr-xr-x    3 <user>  wheel      96 Nov 22 21:22 ..
+drwxr-xr-x   12 <user>  wheel     384 Nov 22 21:23 .git
+-rw-r--r--    1 <user>  staff     480 Nov 22 21:22 .gitignore
+drwxr-xr-x    3 <user>  wheel      96 Nov 22 21:23 .next
+-rw-r--r--    1 <user>  wheel     679 Nov 22 21:23 AGENTS.md
+-rw-r--r--    1 <user>  staff    1450 Nov 22 21:22 README.md
+-rw-r--r--    1 <user>  staff     465 Nov 22 21:22 eslint.config.mjs
+-rw-r--r--    1 <user>  staff     288 Nov 22 21:23 next-env.d.ts
+-rw-r--r--    1 <user>  staff     318 Nov 22 21:22 next.config.ts
+drwxr-xr-x  293 <user>  wheel    9376 Nov 22 21:23 node_modules
+-rw-r--r--    1 <user>  wheel  233393 Nov 22 21:23 package-lock.json
+-rw-r--r--    1 <user>  wheel     539 Nov 22 21:22 package.json
+drwxr-xr-x    7 <user>  wheel     224 Nov 22 21:22 public
 … (39 more lines)
 ```
 </details>
@@ -281,20 +281,20 @@ S=$SCRATCH/referflow; P="~/Desktop/AI coding/Project3"; rm -rf $S/.git $S/.next 
 Result:
 ```
 total 520
-drwxr-xr-x@  15 zact  staff     480 Nov 22 21:23 .
-drwxr-xr-x   10 zact  staff     320 Nov 22 21:16 ..
--rw-r--r--    1 zact  staff     480 Nov 22 21:22 .gitignore
--rw-r--r--    1 zact  staff     679 Nov 22 21:23 AGENTS.md
--rw-r--r--    1 zact  staff    1450 Nov 22 21:22 README.md
-drwxr-xr-x    4 zact  staff     128 Nov 22 21:23 docs
--rw-r--r--    1 zact  staff     465 Nov 22 21:22 eslint.config.mjs
--rw-r--r--    1 zact  staff     288 Nov 22 21:23 next-env.d.ts
--rw-r--r--    1 zact  staff     318 Nov 22 21:22 next.config.ts
-drwxr-xr-x  293 zact  staff    9376 Nov 22 21:23 node_modules
--rw-r--r--    1 zact  staff  233393 Nov 22 21:23 package-lock.json
--rw-r--r--    1 zact  staff     539 Nov 22 21:22 package.json
-drwxr-xr-x    7 zact  staff     224 Nov 22 21:22 public
-drwxr-xr-x    3 zact  staff      96 Nov 22 21:22 src
+drwxr-xr-x@  15 <user>  staff     480 Nov 22 21:23 .
+drwxr-xr-x   10 <user>  staff     320 Nov 22 21:16 ..
+-rw-r--r--    1 <user>  staff     480 Nov 22 21:22 .gitignore
+-rw-r--r--    1 <user>  staff     679 Nov 22 21:23 AGENTS.md
+-rw-r--r--    1 <user>  staff    1450 Nov 22 21:22 README.md
+drwxr-xr-x    4 <user>  staff     128 Nov 22 21:23 docs
+-rw-r--r--    1 <user>  staff     465 Nov 22 21:22 eslint.config.mjs
+-rw-r--r--    1 <user>  staff     288 Nov 22 21:23 next-env.d.ts
+-rw-r--r--    1 <user>  staff     318 Nov 22 21:22 next.config.ts
+drwxr-xr-x  293 <user>  staff    9376 Nov 22 21:23 node_modules
+-rw-r--r--    1 <user>  staff  233393 Nov 22 21:23 package-lock.json
+-rw-r--r--    1 <user>  staff     539 Nov 22 21:22 package.json
+drwxr-xr-x    7 <user>  staff     224 Nov 22 21:22 public
+drwxr-xr-x    3 <user>  staff      96 Nov 22 21:22 src
 … (85 more lines)
 ```
 </details>
@@ -649,7 +649,7 @@ sandbox
 
 <details><summary>🔧 #24 Write — ~/Desktop/AI coding/Project3/CLAUDE.md</summary>
 
-```
+````
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -676,7 +676,7 @@ npm run db:generate      # regenerate Prisma Client
 ```
 
 … (10 more lines)
-```
+````
 
 Result:
 ```
@@ -789,7 +789,7 @@ The file ~/Desktop/AI coding/Project3/CLAUDE.md has been updated successfully. (
 
 <details><summary>🔧 #29 Write — ~/Desktop/AI coding/Project3/docs/architecture.md</summary>
 
-```
+````
 # ReferFlow Architecture
 
 ## Overview
@@ -816,7 +816,7 @@ rule (pure function) → persist in a Prisma transaction → revalidate the affe
 | Actions | `src/app/**/actions.ts`       | policy, domain, db    | Vitest integration        |
 | Policy  | `src/lib/auth/`               | domain types only     | Vitest unit (TDD)         |
 … (54 more lines)
-```
+````
 
 Result:
 ```
@@ -1136,7 +1136,7 @@ Async agent launched successfully. (This tool result is internal metadata — ne
 agentId: ad62e8a33d5e187df (internal ID - do not mention to user. Use SendMessage with to: 'ad62e8a33d5e187df', summary: '<5-10 word recap>' to continue this agent.)
 The agent is working in the background. You will be notified automatically when it completes. You know nothing about its results until that notification arrives — do not report, assume, or predict them; continue other work or respond to the user in the meantime.
 Do not duplicate this agent's work — avoid working with the same files or topics it is using.
-output_file: /private/tmp/claude-501/-Users-zact-Desktop-AI-coding-Project3/20cd6ae8-bab1-4a1b-8b34-1c219eed8a53/tasks/ad62e8a33d5e187df.output
+output_file: /private/tmp/claude-501/-Users-<user>-Desktop-AI-coding-Project3/20cd6ae8-bab1-4a1b-8b34-1c219eed8a53/tasks/ad62e8a33d5e187df.output
 Do NOT Read or tail this file via the shell tool — it is the full subagent JSONL transcript and reading it will overflow your context. If the user asks for progress, say the agent is still running; you'll get a completion notification.
 ```
 </details>
