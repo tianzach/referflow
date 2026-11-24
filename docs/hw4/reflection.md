@@ -69,5 +69,28 @@ context quickly. We now pipe commands through `grep`/`tail` to keep only the lin
 
 ## Partner's perspective
 
-_(Partner: add 1–2 paragraphs about your session on #3, including how Plan mode compared with
-writing the plan by hand, and when `/compact` or `--continue` helped or hurt.)_
+_Lildonk: issue #3 (quota guard, PR #6) and the PR #5 review. Session log:
+[`2026-11-24-partner-pr5-review-issue3-plan-mode-tdd.md`](../session-logs/2026-11-24-partner-pr5-review-issue3-plan-mode-tdd.md)._
+
+**Plan mode vs. a hand-written plan.** Zichen wrote the #1 plan as a file. I used interactive Plan
+mode for #3, and the main difference is that Plan mode is a hard gate. Claude can only read until I
+approve, so my feedback lands in the plan before any code exists. I used that twice. First: "don't
+overkill, and don't overlap with what Zichen did or planned". Second: "shared files are fine, just
+don't overlap". Each time the scope changed in the plan, not through a later revert. A Plan subagent
+running in parallel produced a second design that wasn't anchored on the first. The most useful test
+in the PR came from comparing the two: it runs the UTC-boundary cases in a UTC+14 zone, because CI
+runs in UTC, where `getMonth()` and `getUTCMonth()` agree. There were rough edges. Approving with
+comments arrives as a "rejection". The approved plan lives in `~/.claude/plans/`, so we still had to
+copy it into `docs/plans/003-quota-guard.md` to make it reviewable. A hand-written plan file skips
+that step, but it also skips the gate. The plan's "expected red" column was worth having on its own:
+when C4's red failed only 7 tests, that matched the prediction instead of being a surprise.
+
+**`/compact` and `--continue`.** I compacted at the Plan → Implement boundary with an explicit
+keep/drop instruction, and that worked well. The summary kept the ACs, the design decisions, the
+cycle table and even my scope feedback word for word, and the next call went straight to the first
+red test. What a summary can't keep is exact text: Claude re-read every file before editing it after
+the compaction. So the committed plan, not the summary, was the real safety net. `claude --continue`
+from a terminal resumed the same session ID with the compaction marker, so nothing had to be
+re-explained. Two things surprised me. The resumed view shows only the condensed history up to the
+compaction, which at first looked like something was missing. And it is a second window onto the
+same transcript, so only one window should be used at a time; I kept working in the editor chat.

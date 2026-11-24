@@ -47,6 +47,9 @@ npm run db:generate      # regenerate Prisma Client
 
 Before saying a task is done run: `npm run lint && npm run typecheck && npm test`.
 
+Use Node 24 (`.nvmrc`). On Node 20, Vitest's failure reporter crashes with `Map.groupBy is not a
+function`, so a red TDD run looks like a tooling error instead of an assertion failure.
+
 If Vitest fails with `Cannot find native binding` (rolldown) after adding a dependency, npm dropped
 the platform-specific optional packages from the lockfile (npm/cli#4828). Move `node_modules` and
 `package-lock.json` aside and run `npm i` from scratch; check
