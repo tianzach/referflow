@@ -26,6 +26,13 @@ def short(s, n):
         out += f"\n… ({len(lines) - n} more lines)"
     return out[:3000]
 
+def fence(body):
+    """Fence body with more backticks than any fence inside it, so a ``` line in a tool's
+    input or output (a markdown file, a heredoc, a PR body) can't close the block early."""
+    inner = [len(m.group(1)) for m in re.finditer(r"^ {0,3}(`{3,})", body, re.M)]
+    ticks = "`" * max([3] + [k + 1 for k in inner])
+    return f"{ticks}\n{body}\n{ticks}"
+
 def tool_summary(name, inp):
     if name == "Bash":
         return inp.get("description", ""), inp.get("command", "")
@@ -86,14 +93,14 @@ def main():
                     continue
                 if str(n) in notes:
                     out.append(notes[str(n)] + "\n")
-                out.append(f"<details><summary>🔧 #{n} {b['name']} — {title}</summary>\n\n```\n{short(body, 25)}\n```\n")
+                out.append(f"<details><summary>🔧 #{n} {b['name']} — {title}</summary>\n\n{fence(short(body, 25))}\n")
             elif t == "user" and bt == "tool_result":
                 c = b.get("content")
                 if isinstance(c, list):
                     c = "\n".join(x.get("text", "") for x in c if isinstance(x, dict))
                 c = scrub(str(c or ""))
                 if not index:
-                    out.append(f"Result:\n```\n{short(c, 15)}\n```\n</details>\n")
+                    out.append(f"Result:\n{fence(short(c, 15))}\n</details>\n")
     if not index:
         print("\n".join(out))
 
